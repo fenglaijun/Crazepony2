@@ -15,7 +15,7 @@
  * along with Cleanflight.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
+#pragma once	//保证头文件只编译一次
 
 bool mpu6050AccDetect(acc_t *acc);
 bool mpu6050GyroDetect(gyro_t *gyro);

@@ -178,10 +178,10 @@ cfTask_t cfTasks[] = {
     },
 #endif
 
-#ifdef FBM320
-    [TASK_FBM320] = {
-        .taskName = "FBM320",
-        .taskFunc = taskFbm320,
+#ifdef BMP280
+    [TASK_BMP280] = {
+        .taskName = "BMP280",
+        .taskFunc = taskBMP280,
         .desiredPeriod = 1000000 / 50,         // 50 Hz, every 20 ms
         .staticPriority = TASK_PRIORITY_MEDIUM,
     },

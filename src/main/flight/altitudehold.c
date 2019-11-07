@@ -59,8 +59,8 @@
 #include "drivers/nrf2401.h"
 #endif
 
-#ifdef FBM320
-#include "drivers/fbm320.h"
+#ifdef BMP280
+#include "drivers/bmp280.h"
 #endif
 
 
@@ -145,7 +145,7 @@ void applyAltHold(void)
     if (STATE(FIXED_WING)) {
         applyFixedWingAltHold();
     }
-#ifdef FBM320	
+#ifdef BMP280
 	else if(FB.calibrate_finished)
         applyMultirotorAltHold();
 #else 
@@ -161,7 +161,7 @@ void updateAltHoldState(void)
 
 #ifdef NRF
 #ifdef THRO_DIRECT
-#ifdef FBM320
+#ifdef BMP280
 	if((mspData.mspCmd & ALTHOLD) && FB.calibrate_finished)
 #else
 	if(mspData.mspCmd & ALTHOLD)
@@ -213,7 +213,7 @@ void updateAltHoldState(void)
 		}
 	}
 	
-#ifdef FBM320
+#ifdef BMP280
 	if((alt_on && flag.alt) && FB.calibrate_finished)
 #else
 	if(alt_on && flag.alt)
@@ -341,10 +341,10 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     previousTime = currentTime;
 
 #ifdef BARO
-#ifdef FBM320
+#ifdef BMP280
 	if(!FB.calibrate_finished)
 	{
-		//fbm320_init();
+		//bmp280_init();
 		vel = 0;
         accAlt = 0;	
 	}
@@ -411,7 +411,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     imuResetAccelerationSum();
 
 #ifdef BARO
-#ifdef FBM320
+#ifdef BMP280
 	if(!FB.calibrate_finished)
 		return;
 #else

@@ -257,7 +257,7 @@ SYSTEM_SRC = \
 		   msp/msp.c \
 		   msp/msp_serial.c \
 			drivers/nrf2401.c \
-			drivers/fbm320.c \
+			drivers/bmp280.c \
 			drivers/app.c\
 			drivers/led.c\
 		   $(TARGET_SRC) \

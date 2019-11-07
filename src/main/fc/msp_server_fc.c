@@ -107,8 +107,8 @@
 #include "io/serial_4way.h"
 #endif
 
-#ifdef FBM320
-#include "drivers/fbm320.h"
+#ifdef BMP280
+#include "drivers/bmp280.h"
 #endif
 
 extern uint16_t cycleTime; // FIXME dependency on mw.c

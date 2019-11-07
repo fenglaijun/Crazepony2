@@ -61,8 +61,8 @@ typedef enum {
     TASK_TRANSPONDER,
 #endif
 
-#ifdef FBM320
-	TASK_FBM320,
+#ifdef BMP280
+	TASK_BMP280,
 #endif
 
     /* Count of real tasks */
@@ -91,6 +91,6 @@ void taskSystem(void);
 void LED_loop(void);
 #endif
 
-#ifdef FBM320
-void taskFbm320(void);
+#ifdef BMP280
+void taskBMP280(void);
 #endif

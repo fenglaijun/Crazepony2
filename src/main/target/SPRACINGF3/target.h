@@ -20,7 +20,7 @@
 #define TARGET_BOARD_IDENTIFIER "SRF3"
 
 #define NRF
-#define FBM320
+#define BMP280
 #define LED_FLASH
 #define WIFI_APP
 #define THRO_DIRECT

@@ -70,8 +70,8 @@
 #ifdef LED_FLASH
 #include "drivers/led.h"
 #endif
-#ifdef FBM320
-#include "drivers/fbm320.h"
+#ifdef BMP280
+#include "drivers/bmp280.h"
 #endif
 #ifdef WIFI_APP
 #include "drivers/app.h"
@@ -730,7 +730,7 @@ void configureScheduler(void)
 #endif
 #if defined(BARO) || defined(SONAR)
     //setTaskEnabled(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR));
-#ifdef FBM320
+#ifdef BMP280
 	if(FB.calibrate_finished)	setTaskEnabled(TASK_ALTITUDE, true);
 #else
 	setTaskEnabled(TASK_ALTITUDE, true);
@@ -748,8 +748,8 @@ void configureScheduler(void)
 	setTaskEnabled(TASK_LEDFLASH,true);
 #endif
 
-#ifdef FBM320
-	setTaskEnabled(TASK_FBM320, true);
+#ifdef BMP280
+	setTaskEnabled(TASK_BMP280, true);
 #endif
 }
 
@@ -765,8 +765,8 @@ int main(void) {
 	LED_init();
 #endif
 
-#ifdef FBM320
-	fbm320_init();
+#ifdef BMP280
+	bmp280_init();
 #endif
 	
 #ifdef WIFI_APP
