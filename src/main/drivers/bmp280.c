@@ -175,21 +175,21 @@ void taskBMP280(void)
 //开始温度转换
 void start_temperature(void)
 {
-	i2cWrite(FMTISensorAdd_I2C,0xf4, 0x2e);
+	i2cWrite(BMP280_I2C_ADDR,0xf4, 0x2e);
 }
 
 //开始气压转换
 void start_pressure(void)
 {
-	i2cWrite(FMTISensorAdd_I2C,0xf4, 0xf4);
+	i2cWrite(BMP280_I2C_ADDR,0xf4, 0xf4);
 }
 
 uint32_t Read_data(void)
 {
 	uint8_t buf[3];
-	i2cRead(FMTISensorAdd_I2C,0xf6,1,&buf[0]);
-	i2cRead(FMTISensorAdd_I2C,0xf7,1,&buf[1]);
-	i2cRead(FMTISensorAdd_I2C,0xf7,1,&buf[2]);
+	i2cRead(BMP280_I2C_ADDR,0xf6,1,&buf[0]);
+	i2cRead(BMP280_I2C_ADDR,0xf7,1,&buf[1]);
+	i2cRead(BMP280_I2C_ADDR,0xf7,1,&buf[2]);
 	return ((uint32_t)buf[0] << 16) | ((uint16_t)buf[1] << 8) | buf[2];
 }
 
@@ -199,12 +199,12 @@ void read_offset(void)
 	uint8_t buf[2];
 	uint16_t R[10]={0};
 	for(uint8_t i = 0;i < 9;i++) {
-		i2cRead(FMTISensorAdd_I2C,(0xaa+i*2),1,&buf[0]);
-		i2cRead(FMTISensorAdd_I2C,(0xab+i*2),1,&buf[1]);
+		i2cRead(BMP280_I2C_ADDR,(0xaa+i*2),1,&buf[0]);
+		i2cRead(BMP280_I2C_ADDR,(0xab+i*2),1,&buf[1]);
 		R[i] = ((uint8_t) buf[0] << 8) | buf[1];
 	}
-	i2cRead(FMTISensorAdd_I2C,0xa4,1,&buf[0]);
-	i2cRead(FMTISensorAdd_I2C,0xf1,1,&buf[1]);
+	i2cRead(BMP280_I2C_ADDR,0xa4,1,&buf[0]);
+	i2cRead(BMP280_I2C_ADDR,0xf1,1,&buf[1]);
 	R[9] = ((uint8_t) buf[0] << 8) | buf[1];
 	
 	//Use R0~R9 calculate C0~C12 of FB-02
