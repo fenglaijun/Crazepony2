@@ -131,13 +131,10 @@ bool bmp280_init(void)
     // set oversampling + power mode (forced), and start sampling
     i2cWrite(BMP280_I2C_ADDR, BMP280_CTRL_MEAS_REG, BMP280_MODE);
 
-	read_offset();
-	start_temperature();
-	delay(3);
-	FB.UT = Read_data();
-	start_pressure();
-	delay(10);
-	FB.UP = Read_data();
+
+    start_measurement();
+	delay(13);
+	Read_data();
 	calculate_real_pressure(FB.UP, FB.UT);
 	FB.Reff_P = FB.RP;
 	FB.calibrate_finished = true;
@@ -153,109 +150,71 @@ static uint32_t baroPressureSum;
 void taskBMP280(void)
 {
 	static float alt;
-	static char state = 0;
-	switch(state) {
-		case 0:	FB.UP = Read_data();
-				start_temperature();
-				state = 1;
-				break;
-		case 1: FB.UT = Read_data();
-				start_pressure();
-				calculate_real_pressure(FB.UP, FB.UT);
-				baroPressureSum = recalculateBarometerTotal(SAMPLE_COUNT_MAX, baroPressureSum, FB.RP);
-				alt = Rel_Altitude(baroPressureSum/(SAMPLE_COUNT_MAX-1),FB.Reff_P) * 100;//unit:cm
-				FB.Altitude = SCALE*alt + (1-SCALE)*FB.Altitude;
-				//debug[3] = (int16_t)alt;
-				state = 0;
-				break;
-		default:break;
-	}
+
+	start_measurement();
+	Read_data();
+	calculate_real_pressure(FB.UP, FB.UT);
+	baroPressureSum = recalculateBarometerTotal(SAMPLE_COUNT_MAX, baroPressureSum, FB.RP);
+	alt = Rel_Altitude(baroPressureSum/(SAMPLE_COUNT_MAX-1),FB.Reff_P) * 100;//unit:cm
+	FB.Altitude = SCALE*alt + (1-SCALE)*FB.Altitude;
+	//debug[3] = (int16_t)alt;
 }
 
-//开始温度转换
-void start_temperature(void)
+//开始转换,温度和气压一起转换
+void start_measurement(void)
 {
-	i2cWrite(BMP280_I2C_ADDR,0xf4, 0x2e);
-}
-
-//开始气压转换
-void start_pressure(void)
-{
-	i2cWrite(BMP280_I2C_ADDR,0xf4, 0xf4);
+	i2cWrite(BMP280_I2C_ADDR, BMP280_CTRL_MEAS_REG, BMP280_MODE);
 }
 
 uint32_t Read_data(void)
 {
-	uint8_t buf[3];
-	i2cRead(BMP280_I2C_ADDR,0xf6,1,&buf[0]);
-	i2cRead(BMP280_I2C_ADDR,0xf7,1,&buf[1]);
-	i2cRead(BMP280_I2C_ADDR,0xf7,1,&buf[2]);
-	return ((uint32_t)buf[0] << 16) | ((uint16_t)buf[1] << 8) | buf[2];
+    uint8_t data[BMP280_DATA_FRAME_SIZE];
+    // read data from sensor
+    i2cRead(BMP280_I2C_ADDR, BMP280_PRESSURE_MSB_REG, BMP280_DATA_FRAME_SIZE, data);
+    FB.UP = (int32_t)((((uint32_t)(data[0])) << 12) | (((uint32_t)(data[1])) << 4) | ((uint32_t)data[2] >> 4));
+    FB.UT = (int32_t)((((uint32_t)(data[3])) << 12) | (((uint32_t)(data[4])) << 4) | ((uint32_t)data[5] >> 4));
 }
 
-//读取气压计出厂校准值
-void read_offset(void)										
+// Returns temperature in DegC, resolution is 0.01 DegC. Output value of "5123" equals 51.23 DegC
+// t_fine carries fine temperature as global value
+static int32_t bmp280_compensate_T(int32_t adc_T)
 {
-	uint8_t buf[2];
-	uint16_t R[10]={0};
-	for(uint8_t i = 0;i < 9;i++) {
-		i2cRead(BMP280_I2C_ADDR,(0xaa+i*2),1,&buf[0]);
-		i2cRead(BMP280_I2C_ADDR,(0xab+i*2),1,&buf[1]);
-		R[i] = ((uint8_t) buf[0] << 8) | buf[1];
-	}
-	i2cRead(BMP280_I2C_ADDR,0xa4,1,&buf[0]);
-	i2cRead(BMP280_I2C_ADDR,0xf1,1,&buf[1]);
-	R[9] = ((uint8_t) buf[0] << 8) | buf[1];
-	
-	//Use R0~R9 calculate C0~C12 of FB-02
-	FB.C0 = R[0] >> 4;
-	FB.C1 = ((R[1] & 0xFF00) >> 5) | (R[2] & 7);
-	FB.C2 = ((R[1] & 0xFF) << 1) | (R[4] & 1);
-	FB.C3 = R[2] >> 3;
-	FB.C4 = ((uint32_t)R[3] << 2) | (R[0] & 3);
-	FB.C5 = R[4] >> 1;
-	FB.C6 = R[5] >> 3;
-	FB.C7 = ((uint32_t)R[6] << 3) | (R[5] & 7);
-	FB.C8 = R[7] >> 3;
-	FB.C9 = R[8] >> 2;
-	FB.C10 = ((R[9] & 0xFF00) >> 6) | (R[8] & 3);
-	FB.C11 = R[9] & 0xFF;
-	FB.C12 = ((R[0] & 0x0C) << 1) | (R[7] & 7);
+    int32_t var1, var2, T;
+
+    var1 = ((((adc_T >> 3) - ((int32_t)bmp280_cal.dig_T1 << 1))) * ((int32_t)bmp280_cal.dig_T2)) >> 11;
+    var2  = (((((adc_T >> 4) - ((int32_t)bmp280_cal.dig_T1)) * ((adc_T >> 4) - ((int32_t)bmp280_cal.dig_T1))) >> 12) * ((int32_t)bmp280_cal.dig_T3)) >> 14;
+    bmp280_cal.t_fine = var1 + var2;
+    T = (bmp280_cal.t_fine * 5 + 128) >> 8;
+
+    return T;
 }
 
+// Returns pressure in Pa as unsigned 32 bit integer in Q24.8 format (24 integer bits and 8 fractional bits).
+// Output value of "24674867" represents 24674867/256 = 96386.2 Pa = 963.862 hPa
+static uint32_t bmp280_compensate_P(int32_t adc_P)
+{
+    int64_t var1, var2, p;
+    var1 = ((int64_t)bmp280_cal.t_fine) - 128000;
+    var2 = var1 * var1 * (int64_t)bmp280_cal.dig_P6;
+    var2 = var2 + ((var1*(int64_t)bmp280_cal.dig_P5) << 17);
+    var2 = var2 + (((int64_t)bmp280_cal.dig_P4) << 35);
+    var1 = ((var1 * var1 * (int64_t)bmp280_cal.dig_P3) >> 8) + ((var1 * (int64_t)bmp280_cal.dig_P2) << 12);
+    var1 = (((((int64_t)1) << 47) + var1)) * ((int64_t)bmp280_cal.dig_P1) >> 33;
+    if (var1 == 0)
+        return 0;
+    p = 1048576 - adc_P;
+    p = (((p << 31) - var2) * 3125) / var1;
+    var1 = (((int64_t)bmp280_cal.dig_P9) * (p >> 13) * (p >> 13)) >> 25;
+    var2 = (((int64_t)bmp280_cal.dig_P8) * p) >> 19;
+    p = ((p + var1 + var2) >> 8) + (((int64_t)bmp280_cal.dig_P7) << 4);
+    return (uint32_t)p;
+}
 //计算实际压强以及温度
 void calculate_real_pressure(int32_t UP, int32_t UT)										
 {
-	int32_t DT, DT2, X01, X02, X03, X11, X12, X13, X21, X22, X23, X24, X25, X26, X31, X32, CF, PP1, PP2, PP3, PP4;
-	
-	DT	=	((UT - 8388608) >> 4) + (FB.C0 << 4);
-	X01	=	(FB.C1 + 4459) * DT >> 1;
-	X02	=	((((FB.C2 - 256) * DT) >> 14) * DT) >> 4;
-	X03	=	(((((FB.C3 * DT) >> 18) * DT) >> 18) * DT);
-	FB.RT =	((2500 << 15) - X01 - X02 - X03) >> 15;
-				
-	DT2	=	(X01 + X02 + X03) >> 12;	
-	X11	=	((FB.C5 - 4443) * DT2);
-	X12	=	(((FB.C6 * DT2) >> 16) * DT2) >> 2;
-	X13	=	((X11 + X12) >> 10) + ((FB.C4 + 120586) << 4);
-				
-	X21	=	((FB.C8 + 7180) * DT2) >> 10;
-	X22	=	(((FB.C9 * DT2) >> 17) * DT2) >> 12;
-	X23 =	(X22 >= X21) ? (X22 - X21) : (X21 - X22);
-
-	X24	=	(X23 >> 11) * (FB.C7 + 166426);
-	X25	=	((X23 & 0x7FF) * (FB.C7 + 166426)) >> 11;
-	X26 =	(X21 >= X22) ? (((0 - X24 - X25) >> 11) + FB.C7 + 166426) : (((X24 + X25) >> 11) + FB.C7 + 166426);
-
-	PP1	=	((UP - 8388608) - X13) >> 3;
-	PP2	=	(X26 >> 11) * PP1;
-	PP3	=	((X26 & 0x7FF) * PP1) >> 11;
-	PP4	=	(PP2 + PP3) >> 10;
-				
-	CF	=	(2097152 + FB.C12 * DT2) >> 3;
-	X31	=	(((CF * FB.C10) >> 17) * PP4) >> 2;
-	X32	=	(((((CF * FB.C11) >> 15) * PP4) >> 18) * PP4);
-	FB.RP =	((X31 + X32) >> 15) + PP4 + 99880;
+    // calculate
+    FB.RT = bmp280_compensate_T(UT);
+    FB.RP = bmp280_compensate_P(UP);
 }
 
 //计算相对高度 	单位:m

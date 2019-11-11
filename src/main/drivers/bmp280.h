@@ -28,8 +28,9 @@ struct Sensor
 extern struct Sensor FB;
 
 bool bmp280_init(void);
-void start_temperature(void);
-void start_pressure(void);
+void start_measurement(void);
+//void start_temperature(void);
+//void start_pressure(void);
 uint32_t Read_data(void);
 void read_offset(void);
 void calculate_real_pressure(int32_t UP, int32_t UT);

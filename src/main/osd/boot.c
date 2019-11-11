@@ -107,7 +107,6 @@ void flashLed(void)
     LED0_OFF;
 }
 
-
 void init(void)
 {
     printfSupportInit();

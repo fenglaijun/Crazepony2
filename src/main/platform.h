@@ -43,5 +43,8 @@
 
 #endif // STM32F10X
 
+
+#define debug_open 1
+
 #include "target.h"
 
