@@ -551,9 +551,6 @@ void init(void)
 
     mspInit();
     mspSerialInit();
-#if debug_open
-    printf("Serial init done\n");
-#endif
 
 #ifdef USE_CLI
     cliInit();
@@ -686,9 +683,6 @@ void init(void)
     motorControlEnable = true;
 
     systemState |= SYSTEM_STATE_READY;
-#if debug_open
-    printf("init done\n");
-#endif
 }
 
 #ifdef SOFTSERIAL_LOOPBACK
