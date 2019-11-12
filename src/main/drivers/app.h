@@ -12,4 +12,5 @@ extern uint8_t App_data[APP_DATA_LENGTH];
 extern bool APP_DATA_FLAG,WIFI_DATA_OK;
 
 extern void wifi_uart_init(void);
+extern void debug_uart_init(void);
 #endif

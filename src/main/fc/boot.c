@@ -772,16 +772,16 @@ int main(void) {
 #ifdef WIFI_APP
 	wifi_uart_init();
 #endif
+	//serial printf init
+	debug_uart_init();
+	printf("\r\ninit done\r\n");
 
 	configureScheduler();
 
     while (true) 
 	{
-
         scheduler();
         processLoopback();
-
-	
     }
 
 }
