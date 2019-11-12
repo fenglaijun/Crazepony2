@@ -173,7 +173,7 @@ int tfp_printf(const char *fmt, ...)
     va_start(va, fmt);
     int written = tfp_format(stdout_putp, stdout_putf, fmt, va);
     va_end(va);
-    while (!isSerialTransmitBufferEmpty(printfSerialPort));
+//    while (!isSerialTransmitBufferEmpty(printfSerialPort));
     return written;
 }
 
@@ -197,7 +197,10 @@ int tfp_sprintf(char *s, const char *fmt, ...)
 static void _putc(void *p, char c)
 {
     UNUSED(p);
-    serialWrite(printfSerialPort, c);
+//    USART_SendData(USART1, c);
+    while((USART1->ISR&0X40)==0);//循环发送,直到发送完毕
+    USART1->TDR = c;
+//    serialWrite(printfSerialPort, c);
 }
 
 void printfSupportInit(void)
@@ -206,7 +209,7 @@ void printfSupportInit(void)
 }
 
 #else
-
+asd
 // keil/armcc version
 int fputc(int c, FILE *f)
 {

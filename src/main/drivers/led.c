@@ -154,7 +154,8 @@ void LED_loop(void)
 	}
 
 	switch(LEDCtrl.event) {
-		case READY: LEDBuf.byte = 0X0F;
+		case READY:
+					LEDBuf.byte = 0X0F;
 					break;
 
 		case CALI :	if(b) {b = 0;LEDBuf.byte = LA|LB|LC|LD;}
@@ -173,9 +174,8 @@ void LED_loop(void)
 
 		case LOST : if(++LEDCtrl.cnt >= 4)	LEDCtrl.cnt = 0;
 					LEDBuf.byte = 1<<LEDCtrl.cnt ;
-					break;	
+					break;
 	}
-
 	LEDReflash();
 }
 

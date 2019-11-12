@@ -756,7 +756,7 @@ void configureScheduler(void)
 int main(void) {
 
     init();
-
+	debug_uart_init();
 #ifdef NRF
 	NRF24L01_init();
 #endif
@@ -773,8 +773,8 @@ int main(void) {
 	wifi_uart_init();
 #endif
 	//serial printf init
-	debug_uart_init();
-	printf("\r\ninit done\r\n");
+
+	printf("init done\r\n");
 
 	configureScheduler();
 

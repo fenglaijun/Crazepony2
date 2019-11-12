@@ -138,6 +138,8 @@ bool bmp280_init(void)
 	calculate_real_pressure(FB.UP, FB.UT);
 	FB.Reff_P = FB.RP;
 	FB.calibrate_finished = true;
+	printf("FB.RT %d\r\n",FB.RT);
+	printf("FB.RP %d\r\n",FB.RP);
 	return true;
 
 }
@@ -150,12 +152,12 @@ static uint32_t baroPressureSum;
 void taskBMP280(void)
 {
 	static float alt;
-
 	start_measurement();
 	Read_data();
 	calculate_real_pressure(FB.UP, FB.UT);
 	baroPressureSum = recalculateBarometerTotal(SAMPLE_COUNT_MAX, baroPressureSum, FB.RP);
 	alt = Rel_Altitude(baroPressureSum/(SAMPLE_COUNT_MAX-1),FB.Reff_P) * 100;//unit:cm
+//	printf("alt %d\r\n",alt);
 	FB.Altitude = SCALE*alt + (1-SCALE)*FB.Altitude;
 	//debug[3] = (int16_t)alt;
 }
